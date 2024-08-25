@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABCD123</title> <!-- Replace with your actual roll number -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        #jsonInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #submitBtn {
+            width: 100%;
+            padding: 10px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #filterSelect {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #response {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="input-container">
+        <label for="jsonInput">API Input:</label>
+        <input type="text" id="jsonInput" placeholder='{"data":["M","1","334","4","B"]}'>
+        <button id="submitBtn">Submit</button>
+    </div>
+    <div class="filter-container">
+        <label for="filterSelect">Multi Filter:</label>
+        <select id="filterSelect" multiple>
+            <option value="numbers">Numbers</option>
+            <option value="alphabets">Alphabets</option>
+            <option value="highest_alphabet">Highest Alphabet</option>
+        </select>
+    </div>
+    <div id="response"></div>
+
+    <script>
+        const jsonInput = document.getElementById('jsonInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const filterSelect = document.getElementById('filterSelect');
+        const responseDiv = document.getElementById('response');
+
+        submitBtn.addEventListener('click', async () => {
+            try {
+                const inputData = JSON.parse(jsonInput.value);
+                const response = await fetch('http://localhost:3000/bfhl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(inputData),
+                });
+                const result = await response.json();
+                updateResponse(result);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        filterSelect.addEventListener('change', () => {
+            const result = JSON.parse(responseDiv.getAttribute('data-full-response') || '{}');
+            updateResponse(result);
+        });
+
+        function updateResponse(result) {
+            responseDiv.setAttribute('data-full-response', JSON.stringify(result));
+            const selectedFields = Array.from(filterSelect.selectedOptions).map(option => option.value);
+            let filteredResponse = '';
+
+            if (selectedFields.includes('numbers') && result.numbers) {
+                filteredResponse += `Numbers: ${result.numbers.join(', ')}\n`;
+            }
+            if (selectedFields.includes('alphabets') && result.alphabets) {
+                filteredResponse += `Alphabets: ${result.alphabets.join(', ')}\n`;
+            }
+            if (selectedFields.includes('highest_alphabet') && result.highest_alphabet) {
+                filteredResponse += `Highest Alphabet: ${result.highest_alphabet.join(', ')}\n`;
+            }
+
+            responseDiv.textContent = filteredResponse || 'No fields selected';
+        }
+    </script>
+</body>
+</html>
